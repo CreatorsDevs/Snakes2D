@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class Snake : MonoBehaviour
 {
@@ -14,6 +15,20 @@ public class Snake : MonoBehaviour
     private bool isGameOver; // Game over state
     private bool isInputEnabled; // New variable to track input state
     [SerializeField] private BoxCollider2D snakeGridArea;
+    private int playerScore;
+    private const int scoreValue = 7;
+
+    private bool isShieldActive; // Flag to track if the shield power-up is active
+    private bool isScoreBoostActive; // Flag to track if the score boost power-up is active
+    private bool isSpeedUpActive; // Flag to track if the speed up power-up is active
+    private float originalGridMoveTimerMax; // Stores the original grid move timer max value
+    [SerializeField] private float speedUpDuration = 5f; // Duration for which the speed up power-up is active
+    [SerializeField] private float speedUpMultiplier = 2f; // Multiplier to increase the speed
+
+    [SerializeField] private GameObject shieldPowerUp;
+    [SerializeField] private GameObject ScoreBoostPowerUp;
+    [SerializeField] private GameObject speedBoostPowerUp;
+    [SerializeField] private GameObject scoreBoard;
 
     private void Awake() {
         gridPosition = new Vector2Int(4,5);
@@ -31,6 +46,12 @@ public class Snake : MonoBehaviour
         }
         isGameOver = false; // Reset game over state
         isInputEnabled = true; // Enable input at the start
+        playerScore = 0;
+        
+        isShieldActive = false; // Initialize shield state
+        isScoreBoostActive = false; // Initialize score boost state
+        isSpeedUpActive = false; // Initialize speed up state
+        originalGridMoveTimerMax = gridMoveTimerMax; // Store the original grid move timer max value
     }
     private void FixedUpdate() {
         if (!isGameOver) // Only update if game is not over
@@ -77,6 +98,21 @@ public class Snake : MonoBehaviour
     private void HandleGridMovement()
     {
         gridMoveTimer += Time.deltaTime;
+
+        // Check if the speed up power-up is active
+        if (isSpeedUpActive)
+        {
+            gridMoveTimerMax = originalGridMoveTimerMax / speedUpMultiplier;
+            if (gridMoveTimerMax < 0.05f)
+            {
+                gridMoveTimerMax = 0.05f; // Set a minimum value for the grid move timer max
+            }
+        }
+        else
+        {
+            gridMoveTimerMax = originalGridMoveTimerMax;
+        }
+
         if (gridMoveTimer >= gridMoveTimerMax)
         {
             Vector2Int nextGridPosition = gridPosition + gridMoveDirection;
@@ -85,20 +121,23 @@ public class Snake : MonoBehaviour
             WrapAroundScreen(ref nextGridPosition);
 
             // Check for self-collision
-            if (_segments.Count > 1)
+            if(!isShieldActive) //If shield is not active
             {
-                foreach (Transform segment in _segments)
+                if (_segments.Count > 1)
                 {
-                    if (segment.position == new Vector3(nextGridPosition.x, nextGridPosition.y))
+                    foreach (Transform segment in _segments)
                     {
-                        // Self-collision detected, end the game or perform game over logic here
-                        Debug.Log("GameOver!");
-                        GameOver();
-                        return;
+                        if (segment.position == new Vector3(nextGridPosition.x, nextGridPosition.y))
+                        {
+                            // Self-collision detected, end the game or perform game over logic here
+                            Debug.Log("GameOver!");
+                            GameOver();
+                            return;
+                        }
                     }
                 }
             }
-
+            
             gridPosition = nextGridPosition;
             gridMoveTimer -= gridMoveTimerMax;
 
@@ -155,8 +194,85 @@ public class Snake : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other) {
 
-        if(other.CompareTag("Food")){
-            AddSegment();
+        if(other.CompareTag("Shield"))
+        {
+            // Activate the shield power-up
+            Destroy(other.gameObject);
+            shieldPowerUp.SetActive(true);
+            Debug.Log("Shield PowerUp is Active!");
+            isShieldActive = true;
+            StartCoroutine(DeactivateShield());
+        }
+        else if (other.CompareTag("ScoreBoost"))
+        {
+            // Activate the score boost power-up
+            Destroy(other.gameObject);
+            ScoreBoostPowerUp.SetActive(true);
+            Debug.Log("ScoreBoost PowerUp is Active!");
+            isScoreBoostActive = true;
+            StartCoroutine(DeactivateScoreBoost());
+        }
+        else if (other.CompareTag("SpeedUp"))
+        {
+            // Activate the speed up power-up
+            Destroy(other.gameObject);
+            speedBoostPowerUp.SetActive(true);
+            Debug.Log("Speed PowerUp is Active!");
+            isSpeedUpActive = true;
+            StartCoroutine(DeactivateSpeedUp());
+        }
+    }
+
+    private IEnumerator DeactivateShield()
+    {
+        yield return new WaitForSeconds(10f); // Shield duration
+        isShieldActive = false;
+        shieldPowerUp.SetActive(false);
+    }
+
+    private IEnumerator DeactivateScoreBoost()
+    {
+        yield return new WaitForSeconds(10f); // Score boost duration
+        ScoreBoostPowerUp.SetActive(false);
+        isScoreBoostActive = false;
+    }
+
+    private IEnumerator DeactivateSpeedUp()
+    {
+        yield return new WaitForSeconds(speedUpDuration); // Speed up duration
+        speedBoostPowerUp.SetActive(false);
+        isSpeedUpActive = false;
+    }
+
+    public void IncreaseScoreAndSize()
+    {
+        if (isScoreBoostActive)
+        {
+            playerScore += 2*scoreValue;
+            Debug.Log("ScoreBoost is Active!");
+            scoreBoard.GetComponent<TextMeshProUGUI>().text = playerScore.ToString();
+        }
+        else
+        {
+            playerScore += scoreValue;
+            scoreBoard.GetComponent<TextMeshProUGUI>().text = playerScore.ToString();
+            Debug.Log("ScoreBoost is inactive!");
+        }
+
+        AddSegment();
+    }
+
+    public void DecreaseScoreAndSize()
+    {
+        if (_segments.Count > 1)
+        {
+            // Remove the last segment from the snake's body
+            Transform lastSegment = _segments[_segments.Count - 1];
+            _segments.Remove(lastSegment);
+            Destroy(lastSegment.gameObject);
+
+            playerScore -= scoreValue;
+            scoreBoard.GetComponent<TextMeshProUGUI>().text = playerScore.ToString();
         }
     }
 

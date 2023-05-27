@@ -5,6 +5,10 @@ TagManager:
   serializedVersion: 2
   tags:
   - Food
+  - Shield
+  - PowerUp
+  - ScoreBoost
+  - SpeedUp
   layers:
   - Default
   - TransparentFX
