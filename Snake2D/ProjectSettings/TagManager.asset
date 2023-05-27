@@ -9,6 +9,9 @@ TagManager:
   - PowerUp
   - ScoreBoost
   - SpeedUp
+  - PlayerA
+  - PlayerB
+  - SnakeSegment
   layers:
   - Default
   - TransparentFX

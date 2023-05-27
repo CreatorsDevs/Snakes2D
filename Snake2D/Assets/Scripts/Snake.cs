@@ -6,21 +6,23 @@ using TMPro;
 public class Snake : MonoBehaviour
 {
     private Vector2Int gridMoveDirection;
-    private Vector2Int gridPosition;
+    [SerializeField] private Vector2Int gridPosition;
     private float gridMoveTimer;
     private float gridMoveTimerMax;
     private List<Transform> _segments;
     [SerializeField] private Transform segmentPrefab;
     [SerializeField] private int startingSize = 3; // Default starting size of the snake
-    private bool isGameOver; // Game over state
-    private bool isInputEnabled; // New variable to track input state
+    //private bool isGameOver; // Game over state
+    //private bool isInputEnabled; // New variable to track input state
     [SerializeField] private BoxCollider2D snakeGridArea;
     private int playerScore;
     private const int scoreValue = 7;
 
+    private GameManager gameManager;
     private bool isShieldActive; // Flag to track if the shield power-up is active
     private bool isScoreBoostActive; // Flag to track if the score boost power-up is active
     private bool isSpeedUpActive; // Flag to track if the speed up power-up is active
+    [SerializeField] public bool isSnakeA;
     private float originalGridMoveTimerMax; // Stores the original grid move timer max value
     [SerializeField] private float speedUpDuration = 5f; // Duration for which the speed up power-up is active
     [SerializeField] private float speedUpMultiplier = 2f; // Multiplier to increase the speed
@@ -31,21 +33,20 @@ public class Snake : MonoBehaviour
     [SerializeField] private GameObject scoreBoard;
 
     private void Awake() {
-        gridPosition = new Vector2Int(4,5);
         gridMoveTimerMax = .2f;
         gridMoveTimer = gridMoveTimerMax;
         gridMoveDirection = new Vector2Int(1,0);
     }
 
     private void Start(){
+        gameManager = GameManager.instance;
         _segments = new List<Transform>();
         //_segments.Add(this.transform);
         for (int i = 0; i < startingSize; i++)
         {
             AddSegment();
         }
-        isGameOver = false; // Reset game over state
-        isInputEnabled = true; // Enable input at the start
+
         playerScore = 0;
         
         isShieldActive = false; // Initialize shield state
@@ -54,7 +55,7 @@ public class Snake : MonoBehaviour
         originalGridMoveTimerMax = gridMoveTimerMax; // Store the original grid move timer max value
     }
     private void FixedUpdate() {
-        if (!isGameOver) // Only update if game is not over
+        if (!gameManager.IsGameOver) // Only update if game is not over
         {
             HandleGridMovement();
         }
@@ -62,37 +63,68 @@ public class Snake : MonoBehaviour
 
     private void Update()
     {
-        if (!isGameOver && isInputEnabled) // Only handle input if game is not over and input state enabled
+        if (!gameManager.IsGameOver && gameManager.IsInputEnabled) // Only handle input if game is not over and input state enabled
         {
             HandleInput();
         }
     }
 
-    private void HandleInput(){
-        if(Input.GetKeyDown(KeyCode.UpArrow)){
+    private void HandleInput()
+    {
+        if (isSnakeA)
+        {
+            if(Input.GetKeyDown(KeyCode.W)){
             if (gridMoveDirection.y != -1){
                 gridMoveDirection.x = 0;
                 gridMoveDirection.y = +1;
             }
+            }
+            if(Input.GetKeyDown(KeyCode.S)){
+                if (gridMoveDirection.y != +1){
+                    gridMoveDirection.x = 0;
+                    gridMoveDirection.y = -1;
+                }
+            }
+            if(Input.GetKeyDown(KeyCode.A)){
+                if (gridMoveDirection.x != +1){
+                    gridMoveDirection.x = -1;
+                    gridMoveDirection.y = 0;
+                }
+            }
+            if(Input.GetKeyDown(KeyCode.D)){
+                if (gridMoveDirection.x != -1){
+                    gridMoveDirection.x = +1;
+                    gridMoveDirection.y = 0;
+                }
+            }
         }
-        if(Input.GetKeyDown(KeyCode.DownArrow)){
-            if (gridMoveDirection.y != +1){
+        else
+        {
+            if(Input.GetKeyDown(KeyCode.UpArrow)){
+            if (gridMoveDirection.y != -1){
                 gridMoveDirection.x = 0;
-                gridMoveDirection.y = -1;
+                gridMoveDirection.y = +1;
             }
-        }
-        if(Input.GetKeyDown(KeyCode.LeftArrow)){
-            if (gridMoveDirection.x != +1){
-                gridMoveDirection.x = -1;
-                gridMoveDirection.y = 0;
             }
-        }
-        if(Input.GetKeyDown(KeyCode.RightArrow)){
-            if (gridMoveDirection.x != -1){
-                gridMoveDirection.x = +1;
-                gridMoveDirection.y = 0;
+            if(Input.GetKeyDown(KeyCode.DownArrow)){
+                if (gridMoveDirection.y != +1){
+                    gridMoveDirection.x = 0;
+                    gridMoveDirection.y = -1;
+                }
             }
-        }
+            if(Input.GetKeyDown(KeyCode.LeftArrow)){
+                if (gridMoveDirection.x != +1){
+                    gridMoveDirection.x = -1;
+                    gridMoveDirection.y = 0;
+                }
+            }
+            if(Input.GetKeyDown(KeyCode.RightArrow)){
+                if (gridMoveDirection.x != -1){
+                    gridMoveDirection.x = +1;
+                    gridMoveDirection.y = 0;
+                }
+            }
+        }        
     }
 
     private void HandleGridMovement()
@@ -221,6 +253,28 @@ public class Snake : MonoBehaviour
             isSpeedUpActive = true;
             StartCoroutine(DeactivateSpeedUp());
         }
+        else if(!isSnakeA)
+        {
+            if (other.CompareTag("PlayerA") && gameObject.CompareTag("PlayerB"))
+            {
+                if (!isShieldActive)
+                {
+                // Snake B bites Snake A
+                gameManager.SnakeADies();
+                }
+            }
+        }
+        else if(isSnakeA)
+        {
+            if (other.CompareTag("PlayerB") && gameObject.CompareTag("PlayerA"))
+            {
+                if (!isShieldActive)
+                {
+                // Snake A bites Snake B
+                gameManager.SnakeBDies();
+                }
+            }
+        }
     }
 
     private IEnumerator DeactivateShield()
@@ -264,7 +318,7 @@ public class Snake : MonoBehaviour
 
     public void DecreaseScoreAndSize()
     {
-        if (_segments.Count > 1)
+        if (_segments.Count > 3)
         {
             // Remove the last segment from the snake's body
             Transform lastSegment = _segments[_segments.Count - 1];
@@ -278,8 +332,17 @@ public class Snake : MonoBehaviour
 
     private void GameOver()
     {
-        isGameOver = true; // Set game over state
-        isInputEnabled = false; // Disable input when game is over
+        gameManager.IsGameOver = true; // Set game over state
+        gameManager.IsInputEnabled = false; // Disable input when game is over
+
+        if (gameObject.CompareTag("PlayerA"))
+        {
+            gameManager.SnakeADies();
+        }
+        else if (gameObject.CompareTag("PlayerB"))
+        {
+            gameManager.SnakeBDies();
+        }
     }
 
 }
