@@ -55,7 +55,7 @@ public class Snake : MonoBehaviour
         originalGridMoveTimerMax = gridMoveTimerMax; // Store the original grid move timer max value
     }
     private void FixedUpdate() {
-        if (!gameManager.IsGameOver) // Only update if game is not over
+        if (!gameManager.IsGameOver && !gameManager.IsPaused) // Only update if game is not over and unpaused
         {
             HandleGridMovement();
         }
@@ -74,24 +74,28 @@ public class Snake : MonoBehaviour
         if (isSnakeA)
         {
             if(Input.GetKeyDown(KeyCode.W)){
+            
             if (gridMoveDirection.y != -1){
                 gridMoveDirection.x = 0;
                 gridMoveDirection.y = +1;
             }
             }
             if(Input.GetKeyDown(KeyCode.S)){
+            
                 if (gridMoveDirection.y != +1){
                     gridMoveDirection.x = 0;
                     gridMoveDirection.y = -1;
                 }
             }
             if(Input.GetKeyDown(KeyCode.A)){
+            
                 if (gridMoveDirection.x != +1){
                     gridMoveDirection.x = -1;
                     gridMoveDirection.y = 0;
                 }
             }
             if(Input.GetKeyDown(KeyCode.D)){
+            
                 if (gridMoveDirection.x != -1){
                     gridMoveDirection.x = +1;
                     gridMoveDirection.y = 0;
@@ -101,24 +105,28 @@ public class Snake : MonoBehaviour
         else
         {
             if(Input.GetKeyDown(KeyCode.UpArrow)){
+            
             if (gridMoveDirection.y != -1){
                 gridMoveDirection.x = 0;
                 gridMoveDirection.y = +1;
             }
             }
             if(Input.GetKeyDown(KeyCode.DownArrow)){
+            
                 if (gridMoveDirection.y != +1){
                     gridMoveDirection.x = 0;
                     gridMoveDirection.y = -1;
                 }
             }
             if(Input.GetKeyDown(KeyCode.LeftArrow)){
+            
                 if (gridMoveDirection.x != +1){
                     gridMoveDirection.x = -1;
                     gridMoveDirection.y = 0;
                 }
             }
             if(Input.GetKeyDown(KeyCode.RightArrow)){
+            
                 if (gridMoveDirection.x != -1){
                     gridMoveDirection.x = +1;
                     gridMoveDirection.y = 0;
@@ -229,6 +237,7 @@ public class Snake : MonoBehaviour
         if(other.CompareTag("Shield"))
         {
             // Activate the shield power-up
+            AudioManager.instance.Play(SoundNames.PickUpSound);
             Destroy(other.gameObject);
             shieldPowerUp.SetActive(true);
             Debug.Log("Shield PowerUp is Active!");
@@ -238,6 +247,7 @@ public class Snake : MonoBehaviour
         else if (other.CompareTag("ScoreBoost"))
         {
             // Activate the score boost power-up
+            AudioManager.instance.Play(SoundNames.PickUpSound);
             Destroy(other.gameObject);
             ScoreBoostPowerUp.SetActive(true);
             Debug.Log("ScoreBoost PowerUp is Active!");
@@ -247,6 +257,7 @@ public class Snake : MonoBehaviour
         else if (other.CompareTag("SpeedUp"))
         {
             // Activate the speed up power-up
+            AudioManager.instance.Play(SoundNames.PickUpSound);
             Destroy(other.gameObject);
             speedBoostPowerUp.SetActive(true);
             Debug.Log("Speed PowerUp is Active!");
