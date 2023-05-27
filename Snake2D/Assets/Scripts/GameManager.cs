@@ -1,18 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance; // Singleton instance of the GameManager
 
-    public GameObject pauseMenu;
-    public GameObject gameOverMenu;
-    public GameObject playerASnake;
-    public GameObject playerBSnake;
+    [SerializeField] private GameObject pauseMenu;
+    [SerializeField] private GameObject gameOverMenu;
+    [SerializeField] private GameObject playerASnake;
+    [SerializeField] private GameObject playerBSnake;
+    [SerializeField] private GameObject playPanel;
+    [SerializeField] private Button playButton;
 
+    private bool isFirstGame; // Flag to track if it's the first game
     private bool isPaused;
+    public bool IsPaused
+    {
+        get {return isPaused;}
+    }
     private bool isGameOver; // Game over state
     public bool IsGameOver
     {
@@ -40,14 +48,27 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        Time.timeScale = 0f;
+        isPaused = true; // Start the game in paused state
         isGameOver = false; // Reset game over state
         isInputEnabled = true; // Enable input at the start
-        ResumeGame();
+        isFirstGame = true; // Set the flag to true initially
+        playButton.onClick.AddListener(PlayGame); // Add listener to play button
+        //ResumeGame();
+        if(isFirstGame)
+        {
+            playPanel.SetActive(true);
+        }
+        else
+        {
+            ResumeGame();
+        }
+        
     }
 
     private void Update()
     {
-        if (isGameOver)
+        if (isGameOver || !isInputEnabled)
         {
             return;
         }
@@ -55,6 +76,7 @@ public class GameManager : MonoBehaviour
         // Check for pause/resume input
         if (Input.GetKeyDown(KeyCode.Escape))
         {
+            AudioManager.instance.Play(SoundNames.buttonSound);
             if (isPaused)
             {
                 ResumeGame();
@@ -64,12 +86,15 @@ public class GameManager : MonoBehaviour
                 PauseGame();
             }
         }
+    }
 
-        // Check for restart input
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            RestartGame();
-        }
+    public void PlayGame()
+    {
+        Time.timeScale = 1f; // Resume the game
+        isPaused = false; // Resume the game
+        isInputEnabled = true; // Enable input
+        isFirstGame = false; // Set the flag to false after the first game
+        playPanel.SetActive(false); // Hide the play panel
     }
 
     public void PauseGame()
@@ -111,10 +136,16 @@ public class GameManager : MonoBehaviour
 
     private void GameOver(string message)
     {
-        //isGameOver = true;
+        isGameOver = true;
+        AudioManager.instance.Play(SoundNames.gameOverSound);
         Time.timeScale = 0f; // Pause the game
         gameOverMenu.SetActive(true);
         gameOverMenu.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = message;
+    }
+
+    public void PlayButtonSound()
+    {
+        AudioManager.instance.Play(SoundNames.buttonSound);
     }
 }
 

@@ -20,9 +20,11 @@ public class FoodController : MonoBehaviour
             switch (foodType)
             {
                 case FoodType.MassGainer:
+                    AudioManager.instance.Play(SoundNames.PickUpSound);
                     snake.IncreaseScoreAndSize();
                     break;
                 case FoodType.MassBurner:
+                    AudioManager.instance.Play(SoundNames.PickUpSound);
                     snake.DecreaseScoreAndSize();
                     break;
             }
