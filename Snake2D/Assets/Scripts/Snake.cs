@@ -12,16 +12,19 @@ public class Snake : MonoBehaviour
     private List<Transform> _segments;
     [SerializeField] private Transform segmentPrefab;
     [SerializeField] private int startingSize = 3; // Default starting size of the snake
-    //private bool isGameOver; // Game over state
-    //private bool isInputEnabled; // New variable to track input state
     [SerializeField] private BoxCollider2D snakeGridArea;
     private int playerScore;
     private const int scoreValue = 7;
 
     private GameManager gameManager;
     private bool isShieldActive; // Flag to track if the shield power-up is active
+    public bool IsShieldActive
+    {
+        get { return isShieldActive; }
+    }
     private bool isScoreBoostActive; // Flag to track if the score boost power-up is active
     private bool isSpeedUpActive; // Flag to track if the speed up power-up is active
+    private bool isSnakeDead;
     [SerializeField] public bool isSnakeA;
     private float originalGridMoveTimerMax; // Stores the original grid move timer max value
     [SerializeField] private float speedUpDuration = 5f; // Duration for which the speed up power-up is active
@@ -41,7 +44,7 @@ public class Snake : MonoBehaviour
     private void Start(){
         gameManager = GameManager.instance;
         _segments = new List<Transform>();
-        //_segments.Add(this.transform);
+        
         for (int i = 0; i < startingSize; i++)
         {
             AddSegment();
@@ -233,8 +236,10 @@ public class Snake : MonoBehaviour
     }
 
     private void OnTriggerEnter2D(Collider2D other) {
+        if(isSnakeDead)
+            return;
 
-        if(other.CompareTag("Shield"))
+        if(other.GetComponent<Shield>())
         {
             // Activate the shield power-up
             AudioManager.instance.Play(SoundNames.PickUpSound);
@@ -244,7 +249,7 @@ public class Snake : MonoBehaviour
             isShieldActive = true;
             StartCoroutine(DeactivateShield());
         }
-        else if (other.CompareTag("ScoreBoost"))
+        else if (other.GetComponent<ScoreBooster>())
         {
             // Activate the score boost power-up
             AudioManager.instance.Play(SoundNames.PickUpSound);
@@ -254,7 +259,7 @@ public class Snake : MonoBehaviour
             isScoreBoostActive = true;
             StartCoroutine(DeactivateScoreBoost());
         }
-        else if (other.CompareTag("SpeedUp"))
+        else if (other.GetComponent<SpeedBooster>())
         {
             // Activate the speed up power-up
             AudioManager.instance.Play(SoundNames.PickUpSound);
@@ -264,26 +269,24 @@ public class Snake : MonoBehaviour
             isSpeedUpActive = true;
             StartCoroutine(DeactivateSpeedUp());
         }
-        else if(!isSnakeA)
+        else if(isSnakeA && other.GetComponent<PlayerB>())
         {
-            if (other.CompareTag("PlayerA") && gameObject.CompareTag("PlayerB"))
+            if (other.GetComponent<PlayerB>().snake != null && !other.GetComponent<PlayerB>().snake.IsShieldActive)
             {
-                if (!isShieldActive)
-                {
-                // Snake B bites Snake A
-                gameManager.SnakeADies();
-                }
+                // Snake A bites Snake B
+                Debug.Log("Snake B Dead! Is Shield Active: " + other.GetComponent<PlayerB>().snake.IsShieldActive);
+                gameManager.SnakeBDies();
+                other.GetComponent<PlayerB>().snake.isSnakeDead = true;
             }
         }
-        else if(isSnakeA)
+        else if(!isSnakeA && other.GetComponent<PlayerA>())
         {
-            if (other.CompareTag("PlayerB") && gameObject.CompareTag("PlayerA"))
+            if (other.GetComponent<PlayerA>().snake != null && !other.GetComponent<PlayerA>().snake.IsShieldActive)
             {
-                if (!isShieldActive)
-                {
-                // Snake A bites Snake B
-                gameManager.SnakeBDies();
-                }
+                // Snake B bites Snake A
+                Debug.Log("Snake A Dead! Is Shield Active: " + other.GetComponent<PlayerA>().snake.IsShieldActive);
+                gameManager.SnakeADies();
+                other.GetComponent<PlayerA>().snake.isSnakeDead = true;
             }
         }
     }
@@ -329,7 +332,7 @@ public class Snake : MonoBehaviour
 
     public void DecreaseScoreAndSize()
     {
-        if (_segments.Count > 3)
+        if (_segments.Count > startingSize)
         {
             // Remove the last segment from the snake's body
             Transform lastSegment = _segments[_segments.Count - 1];
@@ -346,11 +349,11 @@ public class Snake : MonoBehaviour
         gameManager.IsGameOver = true; // Set game over state
         gameManager.IsInputEnabled = false; // Disable input when game is over
 
-        if (gameObject.CompareTag("PlayerA"))
+        if (gameObject.GetComponent<PlayerA>())
         {
             gameManager.SnakeADies();
         }
-        else if (gameObject.CompareTag("PlayerB"))
+        else if (gameObject.GetComponent<PlayerB>())
         {
             gameManager.SnakeBDies();
         }

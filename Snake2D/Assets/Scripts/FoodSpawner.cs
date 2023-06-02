@@ -10,22 +10,32 @@ public class FoodSpawner : MonoBehaviour
     [SerializeField] private float foodLifetime = 5f;
     [SerializeField] private BoxCollider2D spawnArea;
 
+    private Coroutine spawnFoodCoroutine;
+
+    private List<GameObject> activeFoodObjects = new List<GameObject>();
+
     private void Start()
     {
-        StartCoroutine(SpawnFood());
+        if(spawnFoodCoroutine == null)
+        {
+            spawnFoodCoroutine = StartCoroutine(SpawnFood());
+        }
+        else
+        {
+            StopCoroutine(SpawnFood());
+        }
     }
 
     private IEnumerator SpawnFood()
     {
-        while (true)
-        {
-            yield return new WaitForSeconds(spawnInterval);
+        yield return new WaitForSeconds(spawnInterval);
 
-            SpawnRandomFood();
-            yield return new WaitForSeconds(foodLifetime);
+        SpawnRandomFood();
+        yield return new WaitForSeconds(foodLifetime);
 
-            ClearFood();
-        }
+        ClearFood();
+
+        yield return StartCoroutine(SpawnFood());
     }
 
     private void SpawnRandomFood()
@@ -48,6 +58,8 @@ public class FoodSpawner : MonoBehaviour
         GameObject food = Instantiate(foodPrefab, spawnPosition, Quaternion.identity);
         FoodController foodController = food.GetComponent<FoodController>();
         foodController.SetFoodType(foodType);
+
+        activeFoodObjects.Add(food);
     }
 
     private Vector2 GetRandomSpawnPosition()
@@ -65,11 +77,12 @@ public class FoodSpawner : MonoBehaviour
 
     private void ClearFood()
     {
-        GameObject[] foods = GameObject.FindGameObjectsWithTag("Food");
-        foreach (GameObject food in foods)
+        foreach (GameObject food in activeFoodObjects)
         {
             Destroy(food);
         }
+        
+        activeFoodObjects.Clear();
     }
 }
 

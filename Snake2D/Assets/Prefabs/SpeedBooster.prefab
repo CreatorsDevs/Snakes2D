@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1131714522245332042}
   - component: {fileID: 5581688356088212991}
   - component: {fileID: 3877247543821180358}
+  - component: {fileID: -1674415555622221181}
   m_Layer: 0
   m_Name: SpeedBooster
   m_TagString: SpeedUp
@@ -111,3 +112,15 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.64, y: 0.64}
   m_EdgeRadius: 0
+--- !u!114 &-1674415555622221181
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2524654911673111004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94c9261209b41834cb752baf204c8e66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
