@@ -13,7 +13,7 @@ public class FoodController : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("PlayerA") || other.CompareTag("PlayerB"))
+        if (other.GetComponent<PlayerA>() || other.GetComponent<PlayerB>())
         {
             Snake snake = other.GetComponent<Snake>();
 

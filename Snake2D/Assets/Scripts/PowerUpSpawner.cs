@@ -10,18 +10,26 @@ public class PowerUpSpawner : MonoBehaviour
     [SerializeField] private BoxCollider2D spawnArea;
     [SerializeField] private float spawnInterval = 10f;
 
+    private Coroutine spawnPowerUpsCoroutine;
+
     private void Start()
     {
-        StartCoroutine(SpawnPowerUps());
+        if(spawnPowerUpsCoroutine == null)
+        {
+            spawnPowerUpsCoroutine = StartCoroutine(SpawnPowerUps());
+        }
+        else
+        {
+            StopCoroutine(SpawnPowerUps());
+        }
     }
 
     private IEnumerator SpawnPowerUps()
     {
-        while (true)
-        {
-            yield return new WaitForSeconds(spawnInterval);
-            SpawnRandomPowerUp();
-        }
+        yield return new WaitForSeconds(spawnInterval);
+        SpawnRandomPowerUp();
+
+        yield return StartCoroutine(SpawnPowerUps());
     }
 
     private void SpawnRandomPowerUp()
