@@ -34,7 +34,7 @@ To play the game locally, follow these steps:
 git clone https://github.com/CreatorsDevs/Snakes2D.git
 ```
 
-2. Open the project in your preferred game development software.
+2. Open the project in unity.
 
 3. Play or Build and run the game.
 
